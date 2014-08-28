@@ -1,0 +1,1 @@
+*/1 * * * * env DISPLAY=:0.0 /home/kennyhsu5/Scripts/gmailNotification/gmailNotification >> /home/kennyhsu5/Scripts/gmailNotification/error.txt

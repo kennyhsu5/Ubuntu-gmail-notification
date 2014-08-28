@@ -1,0 +1,45 @@
+#!/bin/bash
+
+#Parse XML file from gmail
+xmlParse() {
+    #Set Input Field Separator as ">"
+    local IFS=\>
+
+    #Read from stdin and stop when see "<"
+    read -d \< TAG CONTENT
+}
+
+#Send request to Gmail, asking if there are unread mails
+curl -u username:password --silent "https://mail.google.com/mail/feed/atom" > $HOME/Scripts/gmailNotification/response.txt
+
+NEW_EMAIL=false
+TITLE=""
+#Parse the file from gmail request
+while xmlParse; do
+    if [[ $TAG = "title" ]]; then
+	TITLE=$CONTENT
+	echo $CONTENT
+    elif [[ $TAG = "id" ]]; then
+	grep -q $CONTENT $HOME/Scripts/gmailNotification/lastRun.txt
+	STATUS=$?
+	if [[ $STATUS -eq 1 ]]; then
+	    NEW_EMAIL=true
+	fi
+	echo $CONTENT
+    elif [[ $TAG = "name" ]]; then
+	if [[ $NEW_EMAIL = true ]]; then
+	    /usr/bin/notify-send "$CONTENT" "$TITLE" -i emblem-mail
+	    NEW_EMAIL=false
+	fi
+	echo $CONTENT
+    fi
+done < $HOME/Scripts/gmailNotification/response.txt > $HOME/Scripts/gmailNotification/temp.txt
+
+#Copy temporary file into permanent file for next run
+cat $HOME/Scripts/gmailNotification/temp.txt > $HOME/Scripts/gmailNotification/lastRun.txt
+
+#remove temp
+rm $HOME/Scripts/gmailNotification/temp.txt
+
+#remove response file
+rm $HOME/Scripts/gmailNotification/response.txt
